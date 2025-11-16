@@ -1,110 +1,102 @@
-// tt_um_riscv_core_top.v
-`default_nettype none
-
-`include "counter_to_7seg.v"
-`include "pwm_generator.v"
-`include "seg7_animator.v"
-`include "rv_rom.v"
-`include "gpio_reg.v"
+// ---------------------------------------------------------
+// TinyTapeout Top-Level: RISC-V Core + GPIO + PWM + 7-seg
+// ---------------------------------------------------------
 
 module tt_um_riscv_core_top (
-    input  wire [7:0] ui_in,
-    output wire [7:0] uo_out,
-    input  wire [7:0] uio_in,
-    output wire [7:0] uio_out,
-    output wire [7:0] uio_oe,
-    input  wire       ena,
-    input  wire       clk,
-    input  wire       rst_n
+    input  wire        clk,       // TinyTapeout clock
+    input  wire        rst_n,     // TinyTapeout reset (active low)
+    input  wire [7:0]  ui_in,     // unused
+    output wire [7:0]  uo_out,    // outputs: PWM + 7seg
+    input  wire [7:0]  uio_in,
+    output wire [7:0]  uio_out,
+    output wire [7:0]  uio_oe
 );
 
-    // CPU memory interface (picorv32 style)
-    wire        mem_valid;
-    wire        mem_instr;
-    wire        mem_ready;
-    wire [31:0] mem_addr;
-    wire [31:0] mem_wdata;
-    wire [3:0]  mem_wstrb;
-    wire [31:0] mem_rdata;
+    wire reset = ~rst_n;
 
-`ifdef USE_FAKE_CPU
-    // Simulation-only tiny fake CPU (drives MMIO writes)
-    fake_cpu cpu_inst (
+    // -------------------------------
+    // Internal signals
+    // -------------------------------
+    wire [31:0] cpu_addr;
+    wire [31:0] cpu_wdata;
+    wire [31:0] cpu_rdata;
+    wire        cpu_wstrb;
+    wire        cpu_valid;
+    wire        cpu_ready;
+
+    // -------------------------------
+    // ROM (firmware.hex)
+    // -------------------------------
+    rv_rom rom (
         .clk(clk),
-        .rst_n(rst_n),
-        .mem_valid(mem_valid),
-        .mem_addr(mem_addr),
-        .mem_wdata(mem_wdata),
-        .mem_wstrb(mem_wstrb),
-        .mem_rdata(mem_rdata),
-        .mem_ready(mem_ready)
+        .addr(cpu_addr[7:2]),
+        .data(cpu_rdata_rom)
     );
-`else
-    // Real PicoRV32 core (you must provide picorv32.v in src/)
-    picorv32 picorv32_core (
-        .clk      (clk),
-        .resetn   (rst_n),
-        .mem_valid(mem_valid),
-        .mem_instr(mem_instr),
-        .mem_ready(mem_ready),
-        .mem_addr (mem_addr),
-        .mem_wdata(mem_wdata),
-        .mem_wstrb(mem_wstrb),
-        .mem_rdata(mem_rdata)
+
+    // -------------------------------
+    // Simple RAM
+    // -------------------------------
+    simple_ram ram (
+        .clk(clk),
+        .we(cpu_wstrb & (cpu_addr[31:12] == 20'h00001)),
+        .addr(cpu_addr[7:2]),
+        .d_in(cpu_wdata),
+        .d_out(cpu_rdata_ram)
     );
-`endif
 
-    // ROM (0x0000_0000) instance (reads firmware.hex)
-    // Access handled by gpio_reg (mem_rdata/mem_ready)
-    // Instantiate ROM separately if you want direct reads: we provide rv_rom for completeness.
+    // -------------------------------
+    // GPIO register block
+    // -------------------------------
+    wire [7:0] gpio_out;
 
-    // GPIO/MMIO peripheral instance — provides registers and readback
-    wire [3:0] pwm_duty_reg;
-    wire [3:0] display_val_reg;
-    wire [1:0] anim_reg;
     gpio_reg gpio (
         .clk(clk),
-        .rst_n(rst_n),
-        .mem_valid(mem_valid),
-        .mem_addr(mem_addr),
-        .mem_wdata(mem_wdata),
-        .mem_wstrb(mem_wstrb),
-        .mem_rdata(mem_rdata),
-        .mem_ready(mem_ready),
-        .btns(ui_in[1:0]),
-        .pwm_duty_reg(pwm_duty_reg),
-        .display_val_reg(display_val_reg),
-        .anim_reg(anim_reg)
+        .reset(reset),
+        .addr(cpu_addr[7:0]),
+        .wdata(cpu_wdata),
+        .we(cpu_wstrb & (cpu_addr[31:12] == 20'h00002)),
+        .gpio_out(gpio_out),
+        .rdata(cpu_rdata_gpio)
     );
 
-    // peripherals
-    wire pwm_sig;
+    // -------------------------------
+    // Read data mux
+    // -------------------------------
+    assign cpu_rdata =
+        (cpu_addr[31:12] == 20'h00000) ? cpu_rdata_rom  :
+        (cpu_addr[31:12] == 20'h00001) ? cpu_rdata_ram  :
+        (cpu_addr[31:12] == 20'h00002) ? cpu_rdata_gpio :
+                                         32'h00000000;
+
+    assign cpu_ready = cpu_valid;
+
+    // -------------------------------
+    // PWM generator
+    // -------------------------------
+    pwm_generator pwm (
+        .clk(clk),
+        .reset(reset),
+        .duty(gpio_out),
+        .pwm_out(pwm_out)
+    );
+
+    // -------------------------------
+    // 7-seg display animator
+    // -------------------------------
     wire [6:0] seg7;
-    wire [6:0] seg7_animated;
 
-    counter_to_7seg decoder (.count_i(display_val_reg), .seg_o(seg7) );
-
-    pwm_generator pwm_inst(
-        .duty_level_i(pwm_duty_reg),
-        .clk_i(clk),
-        .rst_i(~rst_n),
-        .pwm_sig_o(pwm_sig)
+    seg7_animator anim (
+        .clk(clk),
+        .reset(reset),
+        .value(gpio_out[3:0]),
+        .seg(seg7)
     );
 
-    seg7_animator anim_inst(
-        .clk_i(clk),
-        .rst_i(~rst_n),
-        .mode_i(anim_reg[1]),
-        .seg_o(seg7_animated)
-    );
-
-    wire [6:0] seg_out = (anim_reg[0]) ? seg7_animated : seg7;
-
-    // Drive outputs: uo_out[7]=PWM, uo_out[6:0]=seg_out
-    assign uo_out = { pwm_sig, seg_out };
+    // -------------------------------
+    // Output mapping
+    // -------------------------------
+    assign uo_out = {pwm_out, seg7};
     assign uio_out = 8'b0;
     assign uio_oe  = 8'b0;
 
 endmodule
-
-`default_nettype wire
