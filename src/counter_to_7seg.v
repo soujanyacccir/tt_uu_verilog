@@ -1,8 +1,5 @@
 // counter_to_7seg.v
 `default_nettype none
-`ifndef __COUNTER_to_7seg__
-`define __COUNTER_to_7seg__
-
 module counter_to_7seg (
     input  wire [3:0] count_i,
     output wire [6:0] seg_o
@@ -25,6 +22,4 @@ module counter_to_7seg (
     end
     assign seg_o = seg;
 endmodule
-
-`endif
 `default_nettype wire
