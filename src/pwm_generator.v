@@ -1,6 +1,6 @@
 module pwm_generator (
     input  wire clk,
-    input  wire rst,
+    input  wire rst_n,
     input  wire [7:0] duty,
     output reg  pwm_out
 );
