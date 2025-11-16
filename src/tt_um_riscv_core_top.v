@@ -21,7 +21,7 @@ module tt_um_riscv_core_top (
     // -------------------------------
     gpio_reg gpio_inst (
         .clk        (clk),
-        .rst        (rst),
+        .rst_n        (rst_n),
         .addr       (ui_in[3:0]),
         .wdata      (cpu_wdata),
         .we         (cpu_wen),        // FIXED
@@ -36,7 +36,7 @@ module tt_um_riscv_core_top (
 
     pwm_generator pwm_inst (
         .clk     (clk),
-        .rst     (rst),
+        .rst_n     (rst_n),
         .duty    (gpio_out),
         .pwm_out (pwm_sig)            // FIXED
     );
