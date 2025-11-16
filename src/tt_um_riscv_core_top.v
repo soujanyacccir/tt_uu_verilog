@@ -1,5 +1,5 @@
 module tt_um_riscv_core_top (
-    input  wire [7:0]  ui_in,     // unused
+    input  wire [7:0]  ui_in,     // external input
     output wire [7:0]  uo_out,    // gpio_out
     input  wire [7:0]  uio_in,
     output wire [7:0]  uio_out,
@@ -9,7 +9,7 @@ module tt_um_riscv_core_top (
     input  wire        rst_n
 );
 
-    // CPU <-> GPIO
+    // CPU <-> GPIO wires
     wire [7:0] cpu_wdata;
     wire [7:0] cpu_rdata;
     wire       cpu_wen;
@@ -17,30 +17,27 @@ module tt_um_riscv_core_top (
     wire [7:0] gpio_out;
 
     // -------------------------------
-    // GPIO REGISTER
+    // GPIO REGISTER (no addr)
     // -------------------------------
- gpio_reg gpio_inst (
-    .clk      (clk),
-    .rst_n    (rst_n),
-    .addr     (ui_in[3:0]),    // FIXED: gpio_reg uses 'addr'
-    .wdata    (cpu_wdata),
-    .we       (cpu_wen),       // FIXED: use actual write enable signal
-    .rdata    (cpu_rdata),
-    .gpio_out (uo_out)         // FIXED: exact port name matches module
-);
-
-
+    gpio_reg gpio_inst (
+        .clk      (clk),
+        .rst_n    (rst_n),
+        .we       (cpu_wen),
+        .wdata    (cpu_wdata),
+        .rdata    (cpu_rdata),
+        .gpio_out (gpio_out)
+    );
 
     // -------------------------------
-    // PWM generator (uses gpio_out)
+    // PWM generator 
     // -------------------------------
     wire pwm_sig;
 
     pwm_generator pwm_inst (
         .clk     (clk),
-        .rst_n     (rst_n),
+        .rst_n   (rst_n),
         .duty    (gpio_out),
-        .pwm_out (pwm_sig)            // FIXED
+        .pwm_out (pwm_sig)
     );
 
     // -------------------------------
@@ -49,7 +46,7 @@ module tt_um_riscv_core_top (
     wire [6:0] seg7;
 
     counter_to_7seg seg_inst (
-        .val   (gpio_out[3:0]),       // FIXED
+        .val   (gpio_out[3:0]),
         .seg   (seg7)
     );
 
