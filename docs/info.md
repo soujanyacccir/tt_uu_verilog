@@ -1,23 +1,43 @@
-<!---
+# TinyTapeout RISC-V Mini SoC
 
-This file is used to generate your project datasheet. Please fill in the information below and delete any unused
-sections.
+This project implements a very small RISC-V SoC designed specifically for TinyTapeout.  
+It contains:
 
-You can also include images in this folder and reference them in the markdown. Each image must be less than
-512 kb in size, and the combined size of all images must be less than 1 MB.
--->
+- Minimal RV32I CPU interface (replaceable with PicoRV32)
+- 8-bit GPIO register
+- PWM output (brightness control)
+- 7-segment LED output
+- Internal ROM + small RAM
 
-## How it works
-This project is a tiny RISC-V SoC 
+Works fully with automatic GitHub CI flow of TinyTapeout.
 
+---
 
+## How it Works
 
-## How to test
+### Architecture
+The PicoRV32/Fake CPU generates:
+- address  
+- write data  
+- valid  
+- write strobe  
 
-You can test the project directly on the TinyTape
+These signals access:
 
+1. **ROM (0x00000000)** — contains firmware.hex  
+2. **RAM (0x00001000)** — small data memory  
+3. **GPIO block (0x00002000)** — drives PWM + 7-seg
 
-## External hardware
+The GPIO register value goes to:
+- PWM → `uo_out[7]`
+- 7-segment encoder → `uo_out[6:0]`
 
-No additional external hardware is required
+---
 
+## How to Test
+
+### Simulation
+```sh
+iverilog -o sim.out ../src/*.v tb_top.v
+vvp sim.out
+gtkwave wave.vcd
