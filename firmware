@@ -1,16 +1,18 @@
     .section .text
-    .global _start
+    .globl _start
+
 _start:
-    la t0, mmio_pwm     # address
+    li t0, 0x00002000      # GPIO MMIO address
+    li t1, 0               # counter
+
 loop:
-    li t1, 0
-    sw t1, 0(t0)        # write 0 (example)
-    li t1, 1
-    sw t1, 0(t0)
-    # infinite loop
+    sw t1, 0(t0)           # write counter to GPIO
+    addi t1, t1, 1         # increment
+    andi t1, t1, 255       # keep in 0–255
+
+    li a0, 50000
+delay:
+    addi a0, a0, -1
+    bnez a0, delay
+
     j loop
-
-    .section .data
-mmio_pwm:
-    .word 0x10000000
-
