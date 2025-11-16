@@ -1,35 +1,30 @@
 module tt_um_riscv_core_top (
-    input  wire [7:0]  ui_in,     // external input
-    output wire [7:0]  uo_out,    // gpio_out
-    input  wire [7:0]  uio_in,
+    input  wire [7:0]  ui_in,     // user input → used as data
+    output wire [7:0]  uo_out,    // GPIO out
+    input  wire [7:0]  uio_in,    // used (bit0 = write enable)
     output wire [7:0]  uio_out,
     output wire [7:0]  uio_oe,
-    input  wire        ena,
+    input  wire        ena,       // used
     input  wire        clk,
     input  wire        rst_n
 );
 
-    // CPU <-> GPIO wires
-    wire [7:0] cpu_wdata;
-    wire [7:0] cpu_rdata;
-    wire       cpu_wen;
-
+    // -------------------------------
+    // SIMPLE GPIO REGISTER
+    // -------------------------------
     wire [7:0] gpio_out;
 
-    // -------------------------------
-    // GPIO REGISTER (no addr)
-    // -------------------------------
     gpio_reg gpio_inst (
         .clk      (clk),
         .rst_n    (rst_n),
-        .we       (cpu_wen),
-        .wdata    (cpu_wdata),
-        .rdata    (cpu_rdata),
+        .we       (uio_in[0] & ena),  // write enable from user input
+        .wdata    (ui_in),            // write data from external pins
+        .rdata    (),                 // unused but connected
         .gpio_out (gpio_out)
     );
 
     // -------------------------------
-    // PWM generator 
+    // PWM GENERATOR
     // -------------------------------
     wire pwm_sig;
 
@@ -41,7 +36,7 @@ module tt_um_riscv_core_top (
     );
 
     // -------------------------------
-    // 7-seg display
+    // 7-SEGMENT DISPLAY
     // -------------------------------
     wire [6:0] seg7;
 
@@ -55,6 +50,6 @@ module tt_um_riscv_core_top (
     // -------------------------------
     assign uo_out  = gpio_out;
     assign uio_out = {pwm_sig, seg7};
-    assign uio_oe  = 8'hFF;
+    assign uio_oe  = 8'hFF;   // drive all outputs
 
 endmodule
