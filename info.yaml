@@ -1,7 +1,7 @@
 # Tiny Tapeout project information
 project:
   title:        "RISC-V LED PWM Controller"
-  author:       "soujanya"
+  author:       "CIT"
   discord:      ""
   description:  "A PicoRV32 RISC-V CPU controls LED brightness using a PWM register"
   language:     "Verilog"
