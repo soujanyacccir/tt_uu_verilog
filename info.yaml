@@ -16,7 +16,6 @@ project:
   # List of source files inside ./src/
   source_files:
     - "tt_um_riscv_core_top.v"
-    - "picorv32.v"
     - "simple_ram.v"
     - "firmware_rom.v"
 
