@@ -1,47 +1,46 @@
 # Tiny Tapeout project information
 project:
-  title:        "RISC-V Mini Core Demo"
-  author:       "soujanya"
+  title:        "RISC-V PicoRV32 PWM + 7SEG Controller"
+  author:       "soujanya cccir"
   discord:      ""
-  description:  "A minimal PicoRV32-based RISC-V SoC with small firmware"
+  description:  "RISC-V core drives PWM and 7-seg display using MMIO registers."
   language:     "Verilog"
   clock_hz:     50_000_000
+  tiles:        "1x1"
 
-  # Tile size
-  tiles: "1x1"
+  # Must match your top-level HDL module name
+  top_module:   "tt_um_riscv_core_top"
 
-  # Top module – must begin with tt_um_
-  top_module:  "tt_um_riscv_core_top"
-
-  # List of source files inside ./src/
+  # All source files inside src/ (one per line)
   source_files:
     - "tt_um_riscv_core_top.v"
+    - "gpio_reg.v"
+    - "rv_rom.v"
     - "simple_ram.v"
-    - "firmware_rom.v"
+    - "pwm_generator.v"
+    - "seg7_animator.v"
+    - "counter_to_7seg.v"
 
-# Pinout (do NOT change pin count or order)
+# Pinout for TinyTapeout (8 inputs, 8 outputs, 8 bidir)
 pinout:
-  # Inputs
-  ui[0]: "RESET"
-  ui[1]: "BUTTON_0"
-  ui[2]: "BUTTON_1"
-  ui[3]: ""
-  ui[4]: ""
+  ui[0]: "BTN0_IN"
+  ui[1]: "BTN1_IN"
+  ui[2]: "MODE"
+  ui[3]: "EXT0"
+  ui[4]: "EXT1"
   ui[5]: ""
   ui[6]: ""
   ui[7]: ""
 
-  # Outputs
-  uo[0]: "LED_0"
-  uo[1]: "LED_1"
-  uo[2]: "LED_2"
-  uo[3]: "LED_3"
-  uo[4]: "LED_4"
-  uo[5]: "LED_5"
-  uo[6]: "LED_6"
-  uo[7]: "LED_7"
+  uo[0]: "PWM_OUT"
+  uo[1]: "SEG_A"
+  uo[2]: "SEG_B"
+  uo[3]: "SEG_C"
+  uo[4]: "SEG_D"
+  uo[5]: "SEG_E"
+  uo[6]: "SEG_F"
+  uo[7]: "SEG_G"
 
-  # Bidirectional
   uio[0]: ""
   uio[1]: ""
   uio[2]: ""
@@ -51,5 +50,5 @@ pinout:
   uio[6]: ""
   uio[7]: ""
 
-# Do not change
+# Required — do not change
 yaml_version: 6
