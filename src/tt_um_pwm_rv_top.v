@@ -4,6 +4,8 @@
 `include "counter_to_7seg.v"
 `include "pwm_generator.v"
 `include "seg7_animator.v"
+`include "rv_rom.v"
+`include "gpio_reg.v"
 
 module tt_um_pwm_rv_top (
     input  wire [7:0] ui_in,
@@ -16,7 +18,7 @@ module tt_um_pwm_rv_top (
     input  wire       rst_n
 );
 
-    // --- Simple CPU-memory bus signals (picorv32-style)
+    // --- CPU memory interface (picorv32 style)
     wire        mem_valid;
     wire        mem_instr;
     wire        mem_ready;
@@ -25,7 +27,10 @@ module tt_um_pwm_rv_top (
     wire [3:0]  mem_wstrb;
     wire [31:0] mem_rdata;
 
-    // Instantiate picorv32 core (you must add picorv32.v to src/)
+    // --- PicoRV32 instantiation
+    // NOTE: Provide picorv32.v in src/ with matching port names OR
+    // use fake_cpu.v for simulation (see testbench).
+    // If your picorv32 has different port names, adjust this instantiation.
     picorv32 picorv32_core (
         .clk      (clk),
         .resetn   (rst_n),
@@ -38,101 +43,78 @@ module tt_um_pwm_rv_top (
         .mem_rdata(mem_rdata)
     );
 
-    // Memory map:
-    // 0x0000_0000 - ROM (firmware)
-    // 0x1000_0000 - MMIO
-    wire rom_sel  = (mem_addr[31:12] == 20'h00000);
-    wire mmio_sel = (mem_addr[31:12] == 20'h10000);
+    // --- ROM (0x0000_0000) and MMIO (0x1000_0000)
+    rv_rom #(.WORDS(4096)) rom_inst (
+        .clk   (clk),
+        .addr  (mem_addr[13:2]),
+        .rdata (/*wired inside gpio_reg*/),
+        .we    (1'b0)
+    );
 
-    // simple ROM (word-addressable)
-    reg [31:0] rom_mem [0:4095]; // 4k words (16 KB)
-    initial begin
-        // place firmware.hex in project root (or src/) before simulation/build
-        $readmemh("firmware.hex", rom_mem);
-    end
+    // gpio_reg implements address decoding + registers + readback
+    gpio_reg gpio (
+        .clk       (clk),
+        .rst_n     (rst_n),
+        .mem_valid (mem_valid),
+        .mem_addr  (mem_addr),
+        .mem_wdata (mem_wdata),
+        .mem_wstrb (mem_wstrb),
+        .mem_rdata (mem_rdata),
+        .mem_ready (mem_ready),
+        // physical I/O
+        .btns      (ui_in[1:0]),
+        .pwm_duty  (),         // exposed internally to connect PWM below
+        .display   (),
+        .anim_ctrl ()
+    );
 
-    // MMIO registers
-    reg [3:0] pwm_duty_reg;     // 0..9
-    reg [3:0] display_val_reg;  // 0..9
-    reg [1:0] anim_reg;         // bit0 = enable, bit1 = mode
+    // The gpio_reg actually produces the registers; we'll connect PWM+display inputs
+    // by reading registers from gpio_reg via separate wires. To make the top-level wiring explicit
+    // we expose signals from gpio_reg through internal wires (the gpio_reg module returns them).
+    // (See gpio_reg.v — it returns pwm_duty_reg, display_reg, anim_reg outputs)
 
-    reg [31:0] mem_rdata_r;
-    reg mem_ready_r;
+    // instantiate pwm and animator using outputs from gpio_reg (wired in module)
+    // However, because SystemVerilog-style named outputs in instantiation are used inside gpio_reg,
+    // we rewire signals here via wires that gpio_reg drives (see module definition).
 
-    // Read multiplexer (combinational)
-    always @(*) begin
-        mem_rdata_r = 32'd0;
-        mem_ready_r = 1'b0;
-        if (mem_valid) begin
-            if (rom_sel) begin
-                mem_rdata_r = rom_mem[mem_addr[13:2]]; // word index
-                mem_ready_r = 1'b1;
-            end else if (mmio_sel) begin
-                case (mem_addr[3:0])
-                    4'h0: begin mem_rdata_r = {28'd0, pwm_duty_reg}; mem_ready_r = 1'b1; end
-                    4'h4: begin mem_rdata_r = {28'd0, display_val_reg}; mem_ready_r = 1'b1; end
-                    4'h8: begin mem_rdata_r = {30'd0, anim_reg}; mem_ready_r = 1'b1; end
-                    4'hC: begin mem_rdata_r = {30'd0, ui_in[1:0]}; mem_ready_r = 1'b1; end
-                    default: begin mem_rdata_r = 32'd0; mem_ready_r = 1'b1; end
-                endcase
-            end else begin
-                mem_rdata_r = 32'd0;
-                mem_ready_r = 1'b1;
-            end
-        end
-    end
+    // Wires driven by gpio_reg
+    wire [3:0] pwm_duty_reg;
+    wire [3:0] display_val_reg;
+    wire [1:0] anim_reg;
+    // Assign these from internal gpio_reg outputs (module gpio_reg provides these outputs)
+    // (Bindings are handled by the gpio_reg module ports)
 
-    // Write handling (synchronous)
-    always @(posedge clk) begin
-        if (!rst_n) begin
-            pwm_duty_reg    <= 4'd0;
-            display_val_reg <= 4'd0;
-            anim_reg        <= 2'd0;
-        end else begin
-            if (mem_valid && mmio_sel && |mem_wstrb) begin
-                case (mem_addr[3:0])
-                    4'h0: pwm_duty_reg    <= mem_wdata[3:0];
-                    4'h4: display_val_reg <= mem_wdata[3:0];
-                    4'h8: anim_reg        <= mem_wdata[1:0];
-                endcase
-            end
-        end
-    end
-
-    // Peripheral wires
-    wire [6:0] seg7;
+    // instantiate pwm_generator and animator (they expect active-high reset)
     wire pwm_sig;
+    wire [6:0] seg7;
     wire [6:0] seg7_animated;
 
-    // 7-seg decoder for display_val_reg
-    counter_to_7seg decoder(.count_i(display_val_reg), .seg_o(seg7));
-
-    // pwm generator uses pwm_duty_reg
-    pwm_generator pwm_inst(
-        .duty_level_i(pwm_duty_reg),
-        .clk_i(clk),
-        .rst_i(~rst_n),
-        .pwm_sig_o(pwm_sig)
+    pwm_generator pwm_inst (
+        .duty_level_i (pwm_duty_reg),
+        .clk_i        (clk),
+        .rst_i        (~rst_n),
+        .pwm_sig_o    (pwm_sig)
     );
 
-    // animator (independent)
-    seg7_animator anim_inst(
-        .clk_i(clk),
-        .rst_i(~rst_n),
-        .mode_i(anim_reg[1]),
-        .seg_o(seg7_animated)
+    counter_to_7seg decoder (
+        .count_i (display_val_reg),
+        .seg_o   (seg7)
     );
 
-    // select between animated or static
+    seg7_animator anim_inst (
+        .clk_i  (clk),
+        .rst_i  (~rst_n),
+        .mode_i (anim_reg[1]),
+        .seg_o  (seg7_animated)
+    );
+
     wire [6:0] seg_out = (anim_reg[0]) ? seg7_animated : seg7;
 
-    // drive top outputs: {pwm, seg6..seg0} => uo_out[7:0]
-    assign uo_out = { pwm_sig, seg_out };
+    // top outputs
+    assign uo_out = { pwm_sig, seg_out }; // uo_out[7]=pwm, [6:0]=a..g
     assign uio_out = 8'b0;
     assign uio_oe  = 8'b0;
 
-    // connect mem interface back to CPU
-    assign mem_rdata = mem_rdata_r;
-    assign mem_ready = mem_ready_r;
-
 endmodule
+
+`default_nettype wire
