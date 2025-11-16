@@ -1,16 +1,22 @@
 module simple_ram (
-    input  wire        clk,
-    input  wire        we,
-    input  wire [5:0]  addr,
-    input  wire [31:0] d_in,
-    output reg  [31:0] d_out
+    input  wire clk,
+    input  wire rst_n,
+    input  wire we,
+    input  wire [7:0] addr,
+    input  wire [7:0] wdata,
+    output reg  [7:0] rdata
 );
 
-    reg [31:0] mem[0:63];
+reg [7:0] mem [0:255];
 
-    always @(posedge clk) begin
+always @(posedge clk or negedge rst_n) begin
+    if (!rst_n)
+        rdata <= 8'h00;
+    else begin
         if (we)
-            mem[addr] <= d_in;
-        d_out <= mem[addr];
+            mem[addr] <= wdata;
+        rdata <= mem[addr];
     end
+end
+
 endmodule
