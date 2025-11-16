@@ -1,1 +1,16 @@
+    .section .text
+    .global _start
+_start:
+    la t0, mmio_pwm     # address
+loop:
+    li t1, 0
+    sw t1, 0(t0)        # write 0 (example)
+    li t1, 1
+    sw t1, 0(t0)
+    # infinite loop
+    j loop
+
+    .section .data
+mmio_pwm:
+    .word 0x10000000
 
