@@ -8,18 +8,16 @@ You can also include images in this folder and reference them in the markdown. E
 -->
 
 ## How it works
-This project is a tiny RISC-V SoC built specifically for TinyTapeout.
-Inside the chip, a PicoRV32 CPU runs a small firmware program stored in ROM. The CPU reads the buttons, updates the brightness level, and controls two peripherals:
+This project is a tiny RISC-V SoC 
 
 
 
 ## How to test
 
-You can test the project directly on the TinyTapeout demo board or in simulation:
+You can test the project directly on the TinyTape
 
 
 ## External hardware
 
-Your design uses only standard TinyTapeout demo board components.
-No additional external hardware is required.
+No additional external hardware is required
 
