@@ -1,24 +1,44 @@
-// tb_top.v - quick functional simulation using fake_cpu
 `timescale 1ns/1ps
-`default_nettype none
+
 module tb_top;
-    reg clk;
-    reg rst_n;
-    wire [7:0] ui_in;
+
+    reg clk = 0;
+    reg rst_n = 0;
+
+    // Outputs
     wire [7:0] uo_out;
-    wire [7:0] uio_out;
-    wire [7:0] uio_oe;
 
-    // tie unused inputs low, btns pinned in gpio_reg reads from ui_in[1:0]
-    reg [7:0] ui_in_r = 8'b0;
-    assign ui_in = ui_in_r;
+    // Instantiate DUT
+    tt_um_riscv_core_top dut (
+        .clk(clk),
+        .rst_n(rst_n),
+        .ui_in(8'h00),
+        .uo_out(uo_out),
+        .uio_in(8'h00),
+        .uio_out(),
+        .uio_oe()
+    );
 
-    // instantiate top but replace picorv32 with fake_cpu by editing top (or instantiate fake_cpu externally).
-    // For simplicity, create a small wrapper top that connects fake_cpu to gpio_reg directly in test.
-    // NOTE: This tb expects you to instantiate a test-specific top or modify tt_um_pwm_rv_top to allow fake_cpu.
+    // Fake CPU
+    wire cpu_clk = clk;
+    wire cpu_reset = ~rst_n;
+
+    always #5 clk = ~clk;  // 100 MHz -> 10ns period (simulation only)
+
     initial begin
-        $display("Testbench: please instantiate project-specific wrapper that connects fake_cpu to gpio_reg for simulation");
+        $dumpfile("wave.vcd");
+        $dumpvars(0, tb_top);
+
+        // Reset sequence
+        rst_n = 0;
+        repeat(10) @(posedge clk);
+        rst_n = 1;
+
+        // Run simulation
+        repeat(500) @(posedge clk);
+
+        $display("Simulation finished.");
         $finish;
     end
+
 endmodule
-`default_nettype wire
