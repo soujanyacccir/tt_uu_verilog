@@ -6,7 +6,7 @@ module tt_um_riscv_core_top (
     output wire [7:0]  uio_oe,
     input  wire        ena,
     input  wire        clk,
-    input  wire        rst
+    input  wire        rst_n
 );
 
     // CPU <-> GPIO
