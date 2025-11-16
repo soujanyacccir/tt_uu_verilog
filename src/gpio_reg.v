@@ -1,6 +1,6 @@
 module gpio_reg (
     input  wire        clk,
-    input  wire        rst,
+    input  wire        rst_n,
     input  wire [3:0]  addr,
     input  wire [7:0]  wdata,
     input  wire        we,
