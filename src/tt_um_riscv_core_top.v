@@ -19,15 +19,14 @@ module tt_um_riscv_core_top (
     // -------------------------------
     // GPIO REGISTER
     // -------------------------------
-    gpio_reg gpio_inst (
-        .clk        (clk),
-        .rst_n        (rst_n),
-        .addr       (ui_in[3:0]),
-        .wdata      (cpu_wdata),
-        .we         (cpu_wen),        // FIXED
-        .rdata_out  (cpu_rdata),      // FIXED
-        .gpio_out   (gpio_out)
-    );
+   gpio_reg gpio_inst (
+    .clk       (clk),
+    .rst_n     (rst_n),
+    .address   (ui_in[3:0]),    // FIXED
+    .wdata     (cpu_wdata),
+    .we        (cpu_we),
+    .rdata     (cpu_rdata)      // FIXED
+);
 
     // -------------------------------
     // PWM generator (uses gpio_out)
