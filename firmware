@@ -1,13 +1,16 @@
-CMD_PREFIX ?= riscv32-unknown-elf-
-CC    = $(CMD_PREFIX)gcc
-OBJCOPY = $(CMD_PREFIX)objcopy)
-CFLAGS = -march=rv32im -mabi=ilp32 -O2 -ffreestanding -nostartfiles
+RISCV_PREFIX = riscv32-unknown-elf
+CC = $(RISCV_PREFIX)-gcc
+OBJCOPY = $(RISCV_PREFIX)-objcopy
 
-all: firmware.hex firmware.elf
+CFLAGS = -march=rv32i -mabi=ilp32 -O2 -nostdlib -nostartfiles
 
-firmware.elf: firmware.c
-	$(CC) $(CFLAGS) -Ttext 0x0 -Wl,-Bstatic -o firmware.elf firmware.c
+all: firmware.hex
+
+firmware.elf: firmware.S
+	$(CC) $(CFLAGS) -o firmware.elf firmware.S
 
 firmware.hex: firmware.elf
 	$(OBJCOPY) -O verilog firmware.elf firmware.hex
 
+clean:
+	rm -f firmware.elf firmware.hex
