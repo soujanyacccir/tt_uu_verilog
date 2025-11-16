@@ -19,15 +19,16 @@ module tt_um_riscv_core_top (
     // -------------------------------
     // GPIO REGISTER
     // -------------------------------
-  gpio_reg gpio_inst (
+ gpio_reg gpio_inst (
     .clk      (clk),
     .rst_n    (rst_n),
-    .addr     (ui_in[3:0]),    // FIXED
+    .addr     (ui_in[3:0]),    // FIXED: gpio_reg uses 'addr'
     .wdata    (cpu_wdata),
-    .we       (cpu_wen),       // FIXED
+    .we       (cpu_wen),       // FIXED: use actual write enable signal
     .rdata    (cpu_rdata),
-    .gpio_out (uo_out[7:0])    // FIXED
+    .gpio_out (uo_out)         // FIXED: exact port name matches module
 );
+
 
 
     // -------------------------------
