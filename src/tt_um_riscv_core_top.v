@@ -1,80 +1,61 @@
-// SPDX-License-Identifier: MIT
 module tt_um_riscv_core_top (
-    input  wire        clk,       // TinyTapeout clock
-    input  wire        rst_n,     // TinyTapeout reset (active low)
-    input  wire        ena,       // NEW: enable signal required by TT
-    input  wire [7:0]  ui_in,     // unused inputs for now
-    output wire [7:0]  uo_out,    // output pins
-    input  wire [7:0]  uio_in,    // not used
-    output wire [7:0]  uio_out,   // not used
-    output wire [7:0]  uio_oe     // set to zero (input-only)
+    input  wire [7:0]  ui_in,     // unused
+    output wire [7:0]  uo_out,    // gpio_out
+    input  wire [7:0]  uio_in,
+    output wire [7:0]  uio_out,
+    output wire [7:0]  uio_oe,
+    input  wire        ena,
+    input  wire        clk,
+    input  wire        rst
 );
 
-    //----------------------------------------------------------------------
-    // Internal reset
-    //----------------------------------------------------------------------
-    wire reset = ~rst_n;
+    // CPU <-> GPIO
+    wire [7:0] cpu_wdata;
+    wire [7:0] cpu_rdata;
+    wire       cpu_wen;
 
-    //----------------------------------------------------------------------
-    // RISC-V CPU I/O memory map signals
-    //----------------------------------------------------------------------
-    wire [31:0] gpio_out;
-    wire [31:0] cpu_addr;
-    wire [31:0] cpu_wdata;
-    wire        cpu_wen;
-    wire [31:0] cpu_rdata;
+    wire [7:0] gpio_out;
 
-    //----------------------------------------------------------------------
-    // ROM
-    //----------------------------------------------------------------------
-    rv_rom rom_inst (
-        .clk   (clk),
-        .addr  (cpu_addr[9:2]),
-        .data  (cpu_rdata)
-    );
-
-    //----------------------------------------------------------------------
-    // GPIO register (drives PWM + 7-seg)
-    //----------------------------------------------------------------------
+    // -------------------------------
+    // GPIO REGISTER
+    // -------------------------------
     gpio_reg gpio_inst (
-        .clk      (clk),
-        .reset    (reset),
-        .addr     (cpu_addr[3:2]),
-        .wdata    (cpu_wdata),
-        .wen      (cpu_wen),
-        .gpio_out (gpio_out)
+        .clk        (clk),
+        .rst        (rst),
+        .addr       (ui_in[3:0]),
+        .wdata      (cpu_wdata),
+        .we         (cpu_wen),        // FIXED
+        .rdata_out  (cpu_rdata),      // FIXED
+        .gpio_out   (gpio_out)
     );
 
-    //----------------------------------------------------------------------
-    // PWM generator
-    //----------------------------------------------------------------------
-    wire pwm_out;
+    // -------------------------------
+    // PWM generator (uses gpio_out)
+    // -------------------------------
+    wire pwm_sig;
+
     pwm_generator pwm_inst (
-        .clk   (clk),
-        .reset (reset),
-        .duty  (gpio_out[7:0]),
-        .pwm   (pwm_out)
+        .clk     (clk),
+        .rst     (rst),
+        .duty    (gpio_out),
+        .pwm_out (pwm_sig)            // FIXED
     );
 
-    //----------------------------------------------------------------------
-    // 7-segment display
-    //----------------------------------------------------------------------
-    wire [6:0] seg_out;
+    // -------------------------------
+    // 7-seg display
+    // -------------------------------
+    wire [6:0] seg7;
+
     counter_to_7seg seg_inst (
-        .value (gpio_out[3:0]),
-        .seg   (seg_out)
+        .val   (gpio_out[3:0]),       // FIXED
+        .seg   (seg7)
     );
 
-    //----------------------------------------------------------------------
-    // Outputs (uo_out[0]=PWM, uo_out[7:1]=7-seg)
-    //----------------------------------------------------------------------
-    assign uo_out[0]   = pwm_out;
-    assign uo_out[7:1] = seg_out;
-
-    //----------------------------------------------------------------------
-    // uio = unused
-    //----------------------------------------------------------------------
-    assign uio_out = 8'h00;
-    assign uio_oe  = 8'h00;
+    // -------------------------------
+    // OUTPUTS
+    // -------------------------------
+    assign uo_out  = gpio_out;
+    assign uio_out = {pwm_sig, seg7};
+    assign uio_oe  = 8'hFF;
 
 endmodule
