@@ -1,12 +1,15 @@
 module seg7_animator (
-    input  wire clk,
-    input  wire reset,
-    input  wire [3:0] value,
+    input wire clk,
+    input wire rst_n,
+    input wire [3:0] val,
     output reg [6:0] seg
 );
 
-    always @(*) begin
-        case(value)
+always @(posedge clk or negedge rst_n) begin
+    if (!rst_n)
+        seg <= 7'b0000000;
+    else begin
+        case(val)
             4'h0: seg = 7'b1111110;
             4'h1: seg = 7'b0110000;
             4'h2: seg = 7'b1101101;
@@ -17,7 +20,9 @@ module seg7_animator (
             4'h7: seg = 7'b1110000;
             4'h8: seg = 7'b1111111;
             4'h9: seg = 7'b1111011;
-            default: seg = 7'b0000000;
+            default: seg = 7'b0000001;
         endcase
     end
+end
+
 endmodule
