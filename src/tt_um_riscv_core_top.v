@@ -58,7 +58,7 @@
     assign uio_oe  = 8'hFF;
 
 endmodule*/
-/*`default_nettype none
+`default_nettype none
 
 module tt_um_riscv_core_top (
 `ifdef USE_POWER_PINS
@@ -124,8 +124,8 @@ endmodule
 
 `default_nettype wire
 
-*/
-`default_nettype none
+
+/*`default_nettype none
 
 module tt_um_riscv_core_top (
 `ifdef USE_POWER_PINS
@@ -150,4 +150,4 @@ module tt_um_riscv_core_top (
 
     wire _unused = &{ena,clk,rst_n,1'b0};
 
-endmodule
+endmodule*/
