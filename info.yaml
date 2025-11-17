@@ -1,18 +1,22 @@
+# Tiny Tapeout project information
 project:
-  title: "RISC-V PWM GPIO Demo"
-  author: "CIT"
-  description: "GPIO-controlled PWM + 7-seg display"
-  language: "Verilog"
-  clock_hz: 50_000_000
-  tiles: "1x1"
-  top_module: "tt_um_riscv_core_top"
+  title:        "RISC-V GPIO PWM Demo"
+  author:       "CIT"
+  discord:      ""
+  description:  "Simple GPIO-based PWM + 7-segment decoder demo"
+  language:     "Verilog"
+  clock_hz:     50_000_000
+  tiles:        "1x1"
+  top_module:   "tt_um_riscv_core_top"
 
-source_files:
-  - "tt_um_riscv_core_top.v"
-  - "gpio_reg.v"
-  - "pwm_generator.v"
-  - "counter_to_7seg.v"
+  # Required list of Verilog source files (must exist in /src)
+  source_files:
+    - "tt_um_riscv_core_top.v"
+    - "gpio_reg.v"
+    - "pwm_generator.v"
+    - "counter_to_7seg.v"
 
+# Pinout
 pinout:
   ui[0]: "DATA0"
   ui[1]: "DATA1"
@@ -41,4 +45,5 @@ pinout:
   uio[6]: ""
   uio[7]: ""
 
+# Do not change!
 yaml_version: 6
