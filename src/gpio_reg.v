@@ -1,5 +1,6 @@
-// gpio_reg.v — FIXED VERSION
+// gpio_reg.v — FIXED
 `default_nettype none
+
 module gpio_reg (
     input  wire       clk,
     input  wire       rst_n,
@@ -15,10 +16,11 @@ module gpio_reg (
             rdata    <= 8'h00;
         end else begin
             if (we)
-                gpio_out <= wdata;   // FULL BYTE WRITE ON POSEDGE
+                gpio_out <= wdata;     // FULL BYTE WRITE
             rdata <= gpio_out;
         end
     end
 
 endmodule
+
 `default_nettype wire
