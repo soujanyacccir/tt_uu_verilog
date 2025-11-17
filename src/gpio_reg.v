@@ -13,7 +13,7 @@ module gpio_reg (
         if (!rst_n)
             gpio_out <= 8'd0;
         else if (we)
-            gpio_out <= wdata;   // <-- FULL BYTE WRITE CORRECTED
+            gpio_out <= wdata;   // FULL BYTE STORE, CORRECT
     end
 
 endmodule
