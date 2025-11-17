@@ -1,4 +1,4 @@
-*/module tt_um_riscv_core_top (
+/*module tt_um_riscv_core_top (
 `ifdef USE_POWER_PINS
     input wire vccd1,   // 1.8V supply
     input wire vssd1,   // ground
@@ -57,7 +57,7 @@
     assign uio_out = {pwm_sig, seg7};
     assign uio_oe  = 8'hFF;
 
-endmodule/*
+endmodule*/
 `default_nettype none
 
 module tt_um_riscv_core_top (
