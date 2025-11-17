@@ -1,19 +1,19 @@
 module pwm_generator (
-    input  wire clk,
-    input  wire rst_n,
+    input  wire       clk,
+    input  wire       rst_n,
     input  wire [7:0] duty,
-    output reg pwm_out
+    output reg        pwm_out
 );
 
-reg [7:0] counter;
+reg [7:0] cnt;
 
 always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
-        counter <= 0;
+        cnt     <= 0;
         pwm_out <= 0;
     end else begin
-        counter <= counter + 1;
-        pwm_out <= (counter < duty);
+        cnt <= cnt + 1;
+        pwm_out <= (cnt < duty);
     end
 end
 
