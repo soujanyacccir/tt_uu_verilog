@@ -1,47 +1,38 @@
-# Tiny Tapeout project information
 project:
-  title:        "RISC-V PicoRV32 PWM + 7SEG Controller"
-  author:       "soujanya cccir"
-  discord:      ""
-  description:  "RISC-V core drives PWM and 7-seg display using MMIO registers."
-  language:     "Verilog"
-  clock_hz:     50_000_000
-  tiles:        "1x1"
+  title: "RISC-V PWM GPIO Demo"
+  author: "CIT"
+  description: "GPIO-controlled PWM + 7-seg display"
+  language: "Verilog"
+  clock_hz: 50_000_000
+  tiles: "1x1"
+  top_module: "tt_um_riscv_core_top"
 
-  # Must match your top-level HDL module name
-  top_module:   "tt_um_riscv_core_top"
+source_files:
+  - "tt_um_riscv_core_top.v"
+  - "gpio_reg.v"
+  - "pwm_generator.v"
+  - "counter_to_7seg.v"
 
-  # All source files inside src/ (one per line)
-  source_files:
-    - "tt_um_riscv_core_top.v"
-    - "gpio_reg.v"
-    - "rv_rom.v"
-    - "simple_ram.v"
-    - "pwm_generator.v"
-    - "seg7_animator.v"
-    - "counter_to_7seg.v"
-
-# Pinout for TinyTapeout (8 inputs, 8 outputs, 8 bidir)
 pinout:
-  ui[0]: "BTN0_IN"
-  ui[1]: "BTN1_IN"
-  ui[2]: "MODE"
-  ui[3]: "EXT0"
-  ui[4]: "EXT1"
-  ui[5]: ""
-  ui[6]: ""
-  ui[7]: ""
+  ui[0]: "DATA0"
+  ui[1]: "DATA1"
+  ui[2]: "DATA2"
+  ui[3]: "DATA3"
+  ui[4]: "DATA4"
+  ui[5]: "DATA5"
+  ui[6]: "DATA6"
+  ui[7]: "DATA7"
 
-  uo[0]: "PWM_OUT"
-  uo[1]: "SEG_A"
-  uo[2]: "SEG_B"
-  uo[3]: "SEG_C"
-  uo[4]: "SEG_D"
-  uo[5]: "SEG_E"
-  uo[6]: "SEG_F"
-  uo[7]: "SEG_G"
+  uo[0]: "GPIO0"
+  uo[1]: "GPIO1"
+  uo[2]: "GPIO2"
+  uo[3]: "GPIO3"
+  uo[4]: "GPIO4"
+  uo[5]: "GPIO5"
+  uo[6]: "GPIO6"
+  uo[7]: "GPIO7"
 
-  uio[0]: ""
+  uio[0]: "WE"
   uio[1]: ""
   uio[2]: ""
   uio[3]: ""
@@ -50,5 +41,4 @@ pinout:
   uio[6]: ""
   uio[7]: ""
 
-# Required — do not change
 yaml_version: 6
