@@ -1,33 +1,24 @@
-// gpio_reg.v
-// Simple 8-bit GPIO register, synchronous write, asynchronous active-low reset.
-// - we: active-high write enable (sampled on posedge clk)
-// - wdata: 8-bit input data to store
-// - rdata: continuous readback of stored gpio_out
-// - gpio_out: stored register (also exposed)
-
+// gpio_reg.v — FIXED VERSION
 `default_nettype none
 module gpio_reg (
-    input  wire        clk,
-    input  wire        rst_n,    // active-low
-    input  wire        we,       // write enable (sampled on posedge)
-    input  wire [7:0]  wdata,    // write-data
-    output wire [7:0]  rdata,    // readback
-    output reg  [7:0]  gpio_out  // stored register
+    input  wire       clk,
+    input  wire       rst_n,
+    input  wire       we,
+    input  wire [7:0] wdata,
+    output reg  [7:0] rdata,
+    output reg  [7:0] gpio_out
 );
 
-    // synchronous write, async reset
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            gpio_out <= 8'b0;
+            gpio_out <= 8'h00;
+            rdata    <= 8'h00;
         end else begin
             if (we)
-                gpio_out <= wdata;   // store entire byte on one posedge
-            else
-                gpio_out <= gpio_out; // explicit for clarity (non-blocking)
+                gpio_out <= wdata;   // FULL BYTE WRITE ON POSEDGE
+            rdata <= gpio_out;
         end
     end
-
-    assign rdata = gpio_out;
 
 endmodule
 `default_nettype wire
