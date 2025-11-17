@@ -1,13 +1,18 @@
 module tt_um_riscv_core_top (
-    input  wire [7:0]  ui_in,     // user input → data to GPIO
-    output wire [7:0]  uo_out,    // GPIO out
-    input  wire [7:0]  uio_in,    // bit0 = write enable
-    output wire [7:0]  uio_out,   // PWM + 7-seg
-    output wire [7:0]  uio_oe,    // all outputs enabled
-    input  wire        ena,       // global enable
-    input  wire        clk,
-    input  wire        rst_n
+`ifdef USE_POWER_PINS
+    input wire vccd1,   // 1.8V supply
+    input wire vssd1,   // ground
+`endif
+    input  wire [7:0] ui_in,
+    output wire [7:0] uo_out,
+    input  wire [7:0] uio_in,
+    output wire [7:0] uio_out,
+    output wire [7:0] uio_oe,
+    input  wire       ena,
+    input  wire       clk,
+    input  wire       rst_n
 );
+
 
     // -------------------------------
     // GPIO REGISTER
