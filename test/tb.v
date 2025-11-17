@@ -2,9 +2,11 @@
 
 module tb;
 
+    // Clock and reset
     reg clk = 0;
     reg rst_n = 0;
 
+    // DUT I/Os
     reg  [7:0] ui_in;
     wire [7:0] uo_out;
     reg  [7:0] uio_in;
@@ -12,6 +14,7 @@ module tb;
     wire [7:0] uio_oe;
     reg        ena;
 
+    // Instantiate DUT
     tt_um_riscv_core_top dut (
         .ui_in  (ui_in),
         .uo_out (uo_out),
@@ -23,31 +26,40 @@ module tb;
         .rst_n  (rst_n)
     );
 
-    always #5 clk = ~clk;  // 100 MHz
+    // Clock: 10 ns period
+    always #5 clk = ~clk;
+
+    // Test procedure
+    integer i;
 
     initial begin
+        // Dump waveforms
         $dumpfile("wave.vcd");
         $dumpvars(0, tb);
 
+        // Init
         ui_in  = 8'h00;
         uio_in = 8'h00;
         ena    = 1'b0;
 
-        rst_n = 0; repeat(10) @(posedge clk);
+        // Reset
+        rst_n = 0;
+        repeat (10) @(posedge clk);
         rst_n = 1;
 
+        // Enable
         ena = 1;
 
-        integer i;
-        for (i = 0; i < 12; i++) begin
-            ui_in = i;
+        // WRITE 12 VALUES USING uio_in[0] AS WE
+        for (i = 0; i < 12; i = i + 1) begin
+            ui_in  = i;
             uio_in = 8'b00000001;
             @(posedge clk);
             uio_in = 8'b00000000;
-
-            repeat (10) @(posedge clk);
+            repeat (5) @(posedge clk);
         end
 
+        $display("TEST FINISHED");
         $finish;
     end
 
